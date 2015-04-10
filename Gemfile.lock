@@ -1,0 +1,10 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    holidays (2.0.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  holidays (~> 2.0.0)
