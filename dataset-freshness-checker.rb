@@ -12,7 +12,7 @@ MAIL_SUBJECT = "stale dataset report"
 @options = OpenStruct.new(
   :site => "data.austintexas.gov",
   :id => nil,
-  :max_age => 5,
+  :max_days => 5,
   :notify => [],
   :verbose => false,
   :mail_command => "mailx"
@@ -75,8 +75,8 @@ OptionParser.new do |opts|
     @options.site = site
   end
 
-  opts.on("-mDAYS", "--maxage=DAYS", "Dataset older than this number of business days considered stale [default: #{@options.max_age}]") do |days|
-    @options.max_age = days
+  opts.on("-mDAYS", "--maxdays=DAYS", "Dataset older than this number of business days considered stale [default: #{@options.max_days}]") do |days|
+    @options.max_days = days
   end
 
   opts.on("-nEMAIL", "--notify=EMAIL", "Send report to this email address if dataset stale, repeat option for each recipient") do |email|
@@ -131,9 +131,9 @@ non_business_days = (last_update.to_date .. Time.now.to_date) \
 
 age_business_days = age_calendar_days - non_business_days
 @report.add("Dataset age", sprintf("%.1f", age_business_days), "(business days)")
-@report.add("Max age", sprintf("%.1f", @options.max_age), "(business days)")
+@report.add("Max age", sprintf("%.1f", @options.max_days), "(business days)")
 
-is_stale = (age_business_days > @options.max_age.to_f)
+is_stale = (age_business_days > @options.max_days.to_f)
 dataset_status = (is_stale ? "STALE" : "CURRENT")
 @report.add("Dataset status", dataset_status)
 unless @options.verbose
