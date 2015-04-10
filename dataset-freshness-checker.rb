@@ -83,7 +83,7 @@ OptionParser.new do |opts|
     @options.notify << email
   end
 
-  opts.on("-v", "--verbose", "Display verbose messaages during processing") do
+  opts.on("-v", "--verbose", "Display report created during processing") do
     @options.verbose = true
   end
 
@@ -134,9 +134,14 @@ age_business_days = age_calendar_days - non_business_days
 @report.add("Max age", sprintf("%.1f", @options.max_age), "(business days)")
 
 is_stale = (age_business_days > @options.max_age.to_f)
-@report.add("Dataset status", (is_stale ? "STALE" : "CURRENT"))
+dataset_status = (is_stale ? "STALE" : "CURRENT")
+@report.add("Dataset status", dataset_status)
+unless @options.verbose
+  puts "Dataset is #{dataset_status}"
+end
 
 if is_stale && ! @options.notify.empty?
+  puts "Notifying #{@options.notify.join(', ')} ..."
   subj = "#{MAIL_SUBJECT} [#{meta['name']}]"
   cmd = [@options.mail_command, "-s", subj] + @options.notify
   IO.popen(cmd, "w") do |f|
