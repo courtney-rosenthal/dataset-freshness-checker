@@ -17,7 +17,7 @@ The --notify option can be used to send the report via email when the dataset is
 Example
 -------
 
-    $ ruby dataset-freshness-checker.rb --verbose --id hjeh-idye --maxdays=3 --notify chip@unicom.com
+    $ ruby dataset-freshness-checker.rb --verbose --id=hjeh-idye --maxdays=3 --notify=chip@unicom.com
     Dataset Id:     hjeh-idye
     Endpoint:       https://data.austintexas.gov/api/views/hjeh-idye
     Name:           Austin Animal Center FY15 Intakes *Updated Hourly*
