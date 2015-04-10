@@ -7,7 +7,7 @@ require 'holidays'
 USAGE = "Usage: #{$0} [OPTION ...]"
 
 SECS_PER_DAY = 24*60*60
-MAIL_SUBJECT = "report from dataset checker"
+MAIL_SUBJECT = "stale dataset report"
 
 @options = OpenStruct.new(
   :site => "data.austintexas.gov",
@@ -137,7 +137,8 @@ is_stale = (age_business_days > @options.max_age.to_f)
 @report.add("Dataset status", (is_stale ? "STALE" : "CURRENT"))
 
 if is_stale && ! @options.notify.empty?
-  cmd = [@options.mail_command, "-s", MAIL_SUBJECT] + @options.notify
+  subj = "#{MAIL_SUBJECT} [#{meta['name']}]"
+  cmd = [@options.mail_command, "-s", subj] + @options.notify
   IO.popen(cmd, "w") do |f|
     f.puts @report.to_s
   end
