@@ -106,9 +106,10 @@ die("dataset id (--id) not specified") if @options.id.empty?
 
 @report = Report.new(:verbose => @options.verbose)
 @report.add("Dataset Id", @options.id)
+@report.add("Dataset URL", "https://#{@options.site}/dataset/#{@options.id}")
 
 endpoint = "https://#{@options.site}/api/views/#{@options.id}"
-@report.add("Endpoint", endpoint)
+@report.add("Metadata URL", endpoint)
 
 # Retrieve metadata for dataset
 meta = open(endpoint) do |f|
