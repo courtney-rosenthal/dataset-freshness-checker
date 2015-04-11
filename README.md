@@ -27,8 +27,9 @@ Usage
         -s, --site=SITE                  Data portal hostname [default: data.austintexas.gov]
         -m, --maxdays=DAYS               Dataset older than this number of business days considered stale [default: 5]
         -n, --notify=EMAIL               If dataset stale, send report to this email address, repeat option for each recipient
+        -M, --mailer=CMD                 Use this program to send mail [default: mail]
+        -C, --command=CMD                Pipe report into this command if dataset is stale
         -v, --verbose                    Display report created during processing
-        -M, --mailer=CMD                 Use this program to send mail [default: mailx]
         -h, --help                       Print this help
 
 

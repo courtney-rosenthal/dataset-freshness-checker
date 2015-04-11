@@ -15,7 +15,8 @@ MAIL_SUBJECT = "stale dataset report"
   :max_days => 5,
   :notify => [],
   :verbose => false,
-  :mail_command => "mailx"
+  :mail_command => "mail",
+  :report_command => nil,
 )
 
 def die(mssg)
@@ -51,10 +52,8 @@ class Report
   end
 
   # Add "name: value" line to the report.
-  def add(name, value, addl = nil)
-    s = sprintf("%-16s", name + ":") + value.to_s
-    s << " " + addl unless addl.empty?
-    self << s
+  def add(name, value)
+    self << sprintf("%-16s", name + ":") + value.to_s
   end
 
   def to_s
@@ -86,12 +85,16 @@ OptionParser.new do |opts|
     @options.notify << email
   end
 
-  opts.on("-v", "--verbose", "Display report created during processing") do
-    @options.verbose = true
-  end
-
   opts.on("-MCMD", "--mailer=CMD", "Use this program to send mail [default: #{@options.mail_command}]") do |cmd|
     @options.mail_command = cmd
+  end
+
+  opts.on("-CCMD", "--command=CMD", "Pipe report into this command if dataset is stale") do |cmd|
+    @options.report_command = cmd
+  end
+
+  opts.on("-v", "--verbose", "Display report created during processing") do
+    @options.verbose = true
   end
 
   opts.on("-h", "--help", "Print this help") do
@@ -125,7 +128,6 @@ last_update = Time.at(meta["rowsUpdatedAt"])
 @report.add("Last updated", last_update)
 
 age_calendar_days = (Time.now - last_update) / SECS_PER_DAY
-@report.add("Dataset age", sprintf("%.1f", age_calendar_days), "(calendar days)")
 
 # Count weekend days and holidays from when dataset was last updated to now.
 non_business_days = (last_update.to_date .. Time.now.to_date) \
@@ -134,21 +136,31 @@ non_business_days = (last_update.to_date .. Time.now.to_date) \
   .count
 
 age_business_days = age_calendar_days - non_business_days
-@report.add("Dataset age", sprintf("%.1f", age_business_days), "(business days)")
-@report.add("Max age", sprintf("%.1f", @options.max_days), "(business days)")
-
+age_business_days = 0 if age_business_days < 0
 is_stale = (age_business_days > @options.max_days.to_f)
 dataset_status = (is_stale ? "STALE" : "CURRENT")
+
+@report.add("Dataset age", sprintf("%.1f business days / %.1f calendar days", age_business_days, age_calendar_days))
+@report.add("Max age", sprintf("%.1f business days", @options.max_days))
 @report.add("Dataset status", dataset_status)
 unless @options.verbose
   puts "Dataset is #{dataset_status}"
 end
 
+# Deliver report via email if dataset is stale.
 if is_stale && ! @options.notify.empty?
   puts "Notifying #{@options.notify.join(', ')} ..."
   subj = "#{MAIL_SUBJECT} [#{meta['name']}]"
   cmd = [@options.mail_command, "-s", subj] + @options.notify
   IO.popen(cmd, "w") do |f|
+    f.puts @report.to_s
+  end
+end
+
+# Pipe report into command if dataset is stale.
+if is_stale && ! @options.report_command.empty?
+  puts "Executing #{@options.report_command} ..."
+  IO.popen(@options.report_command, "w") do |f|
     f.puts @report.to_s
   end
 end
