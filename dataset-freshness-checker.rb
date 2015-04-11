@@ -36,6 +36,7 @@ class NilClass
 end
 
 
+# Class to create report on the dataset.
 class Report
 
   def initialize(options = {})
@@ -43,11 +44,13 @@ class Report
     @report = []
   end
 
+  # Add a line of text to the report.
   def <<(s)
     puts s if @verbose
     @report << s
   end
 
+  # Add "name: value" line to the report.
   def add(name, value, addl = nil)
     s = sprintf("%-16s", name + ":") + value.to_s
     s << " " + addl unless addl.empty?
@@ -67,7 +70,7 @@ OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Options:"
 
-  opts.on("-iID", "--id=ID", "Data set id -- this is required") do |id|
+  opts.on("-iID", "--id=ID", "Data set id -- this must be specified") do |id|
     @options.id = id
   end
 
@@ -79,7 +82,7 @@ OptionParser.new do |opts|
     @options.max_days = days
   end
 
-  opts.on("-nEMAIL", "--notify=EMAIL", "Send report to this email address if dataset stale, repeat option for each recipient") do |email|
+  opts.on("-nEMAIL", "--notify=EMAIL", "If dataset stale, send report to this email address, repeat option for each recipient") do |email|
     @options.notify << email
   end
 
@@ -91,7 +94,7 @@ OptionParser.new do |opts|
     @options.mail_command = cmd
   end
 
-  opts.on("-h", "--help", "Prints this help") do
+  opts.on("-h", "--help", "Print this help") do
     puts opts
     exit
   end
@@ -101,22 +104,22 @@ end.parse!
 die(:USAGE) unless ARGV.empty?
 die("dataset id (--id) not specified") if @options.id.empty?
 
-
 @report = Report.new(:verbose => @options.verbose)
 @report.add("Dataset Id", @options.id)
 
-@endpoint = "https://#{@options.site}/api/views/#{@options.id}"
-@report.add("Endpoint", @endpoint)
+endpoint = "https://#{@options.site}/api/views/#{@options.id}"
+@report.add("Endpoint", endpoint)
 
 # Retrieve metadata for dataset
-meta = {}
-open(@endpoint) do |f|
+meta = open(endpoint) do |f|
   data = f.read
-  meta = JSON.parse(data)
+  JSON.parse(data)
 end
+die "metadata retrieval failed" if meta.empty?
+die "metadata missing or incomplete (no \"name\" value)" unless meta.has_key?("name")
 @report.add("Name", meta["name"])
 
-die "unable to retrieve \"rowsUpdatedAt\" value" unless meta.has_key?("rowsUpdatedAt")
+die "metadata missing or incomplete (no \"rowsUpdatedAt\" value)" unless meta.has_key?("rowsUpdatedAt")
 last_update = Time.at(meta["rowsUpdatedAt"])
 @report.add("Last updated", last_update)
 
